@@ -1,6 +1,6 @@
 # DAST
 
 Delta
-Abstrac
+Abstract
 Syntax
 Trees
