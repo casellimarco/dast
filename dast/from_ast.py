@@ -3,6 +3,16 @@ Module with utilities for transforming ASTs
 """
 import ast
 
+from dast.pprint import PrettyAST
+
+def prettify(node: ast.AST):
+    """
+    Turn an AST into a PrettyAST recursively
+    """
+    for child in ast.walk(node):
+        child.__class__ = PrettyAST
+
+
 def strip(node: ast.AST):
     """
     Remove certain properties of an AST that
