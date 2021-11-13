@@ -7,6 +7,8 @@ class PrettyAST(ast.AST): # pylint: disable=too-few-public-methods
     """
     A version of AST with a nicer repr
     """
+    node_type: type
+
     def __repr__(self):
         if self.node_type is ast.Assign:
             return repr(self.targets) + " = " + repr(self.value)
