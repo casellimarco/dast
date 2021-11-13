@@ -4,7 +4,7 @@ orbs:
   python: circleci/python@1.2
 
 jobs:
-  build-and-test:
+  install-and-test:
     docker:
       - image: cimg/python:3.8
     steps:
@@ -12,19 +12,13 @@ jobs:
       - run:
           name: Install
           # This assumes pytest is installed via the install-package step above
-          command: pip install -r requirements.txt
-          name: Install
-          # This assumes pytest is installed via the install-package step above
-          command: python 
+          command: ./firstTimeSetup.sh
       - run:
-          name: Run tests
+          name: Test
           # This assumes pytest is installed via the install-package step above
-          command: pytest
+          command: ./commitBuild.sh
 
-# Invoke jobs via workflows
-# See: https://circleci.com/docs/2.0/configuration-reference/#workflows
 workflows:
-  sample: # This is the name of the workflow, feel free to change it to better match your workflow.
-    # Inside the workflow, you define the jobs you want to run.
+  main:
     jobs:
-      - build-and-test
+      - install-and-test
