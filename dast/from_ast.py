@@ -10,6 +10,7 @@ def prettify(node: ast.AST):
     Turn an AST into a PrettyAST recursively
     """
     for child in ast.walk(node):
+        child.node_type = child.__class__
         child.__class__ = PrettyAST
 
 
