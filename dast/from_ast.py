@@ -32,5 +32,3 @@ def strip(node: ast.AST):
                     strip(element)
             elif isinstance(value, ast.AST):
                 strip(value)
-            else:
-                pass
