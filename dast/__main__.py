@@ -1,24 +1,44 @@
-import sys
+"""
+The main script to be run by git diff.
+To use this with git difftool put these lines in your
+~/.gitconfig:
+
+```
+[difftool "dast"]
+        cmd = "python3 -m dast $LOCAL $REMOTE"
+[difftool]
+        prompt = false
+```
+You can then run it with `git difftool -t dast`
+"""
 import ast
+import sys
+from functools import partial
+
 from deepdiff import DeepDiff
 
-from dast.from_ast import strip
 from dast import pprint_ast as _ # Side-effects only
+from dast.from_ast import strip
 
-def main(then_path, now_path):
-    with open(sys.argv[1]) as f:
-        then = ast.parse(f.read())
-        strip(then)
+_open_utf = partial(open, encoding="utf-8")
 
-    with open(sys.argv[2]) as f:
-        now = ast.parse(f.read())
-        strip(now)
+def main(then_path: str, now_path: str, verbose: bool = True):
+    """
+    Compare two python paths and print the difference
+    """
+    with _open_utf(then_path) as f_then:
+        then_ast = ast.parse(f_then.read())
+        strip(then_ast)
 
-    diff = DeepDiff(then, now)
-    if diff:
+    with _open_utf(now_path) as f_now:
+        now_ast = ast.parse(f_now.read())
+        strip(now_ast)
+
+    diff = DeepDiff(then_ast, now_ast)
+    if diff and verbose:
         print(diff)
 
-    return now, then
+    return now_ast, then_ast
 
 if __name__ == "__main__":
     now, then = main(sys.argv[1], sys.argv[2])
