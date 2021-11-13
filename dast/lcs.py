@@ -47,7 +47,3 @@ def sequence_in_lcs(x: Iterable, lcs: List) -> List[bool]:
             x_in_lcs.append(False)
 
     return x_in_lcs
-
-if __name__ == "__main__":
-    import doctest
-    doctest.testmod()
