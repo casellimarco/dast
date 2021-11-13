@@ -24,7 +24,7 @@ def get_lcs(xs: Iterable[Any], ys: Iterable[Any]):
                     sub_problems[i + 1, j],
                     key=len)
 
-    lcs = sub_problems[len(xs), len(ys)]
+    lcs = sub_problems[len(list(xs)), len(list(ys))]
 
     return lcs, sequence_in_lcs(xs, lcs), sequence_in_lcs(ys, lcs)
 
