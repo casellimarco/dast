@@ -9,4 +9,4 @@ test:
 
 .PHONY: tag
 tag:
-	python get_version.py
+	python version.py

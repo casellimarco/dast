@@ -4,7 +4,7 @@ import sys
 from setuptools import setup
 from setuptools.command.install import install
 
-from get_version import get_version
+from version import get_version
 
 version = get_version()
 with open('README.md') as f:
