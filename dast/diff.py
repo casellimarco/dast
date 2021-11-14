@@ -21,7 +21,7 @@ class Diff(DeepDiff):
         t2_hashes = DeepHash(level.t2)
         t2 = [t2_hashes[level.t2[i]] for i in range(len(level.t2))]
 
-        lcs, t1_in_lcs, t2_in_lcs = get_lcs(t1, t2)
+        lcs = get_lcs(t1, t2)
 
         pairs = []
 
