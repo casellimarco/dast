@@ -42,7 +42,7 @@ class Diff(DeepDiff):
             try:
                 if t1[i] != lcs[n]:
                     pairs.append((
-                        (i, -1), (t1[i], ListItemRemovedOrAdded)
+                        (i, -1), (level.t1[i], ListItemRemovedOrAdded)
                     ))
                     i += 1
             except IndexError:
@@ -50,7 +50,7 @@ class Diff(DeepDiff):
             try:
                 if t2[j] != lcs[n]:
                     pairs.append((
-                        (-1, j), (ListItemRemovedOrAdded, t2[j])
+                        (-1, j), (ListItemRemovedOrAdded, level.t2[j])
                     ))
                     j += 1
             except IndexError:
