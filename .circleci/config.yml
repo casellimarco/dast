@@ -35,7 +35,7 @@ jobs:
           command: python setup.py bdist_wheel
       - run:
           name: upload to pypi
-          command: twine upload dist/*
+          command: twine upload -u __token__ -p $PYPI_TOKEN dist/*
 
 
 workflows:
