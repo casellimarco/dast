@@ -41,7 +41,10 @@ jobs:
 workflows:
   main:
     jobs:
-      - install-and-test
+      - install-and-test:
+          filters:
+            tags:
+              only: /.*/
       - publish-to-pypi:
           requires:
             - install-and-test
