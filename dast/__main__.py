@@ -26,7 +26,7 @@ def main(then_path: str, now_path: str, verbose: bool = True):
     Compare two python paths and print the difference
     """
     if not now_path.endswith(".py"):
-        return
+        return None, None
     with _open_utf(then_path) as f_then:
         then_ast = ast.parse(f_then.read())
         strip(then_ast)
@@ -42,5 +42,7 @@ def main(then_path: str, now_path: str, verbose: bool = True):
         print(f"diff for file {now_path}")
         print(diff)
 
+    return now_ast, then_ast
+
 if __name__ == "__main__":
-    main(sys.argv[1], sys.argv[2])
+    now, then = main(sys.argv[1], sys.argv[2])
