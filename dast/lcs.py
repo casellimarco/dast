@@ -24,26 +24,5 @@ def get_lcs(xs: Iterable[Any], ys: Iterable[Any]):
                     sub_problems[i + 1, j],
                     key=len)
 
-    lcs = sub_problems[len(list(xs)), len(list(ys))]
+    return sub_problems[len(list(xs)), len(list(ys))]
 
-    return lcs, sequence_in_lcs(xs, lcs), sequence_in_lcs(ys, lcs)
-
-def sequence_in_lcs(xs: Iterable, lcs: List) -> List[bool]:
-    """
-    Determine which characters from a sequence are in another
-
-    >>> sequence_in_lcs("abcde", ["a","c"])
-    [True, False, True, False, False]
-    >>> sequence_in_lcs("a", ["a","c"])
-    [True]
-    """
-    x_in_lcs = []
-    n = 0
-    for x in xs:
-        if len(lcs) > n and x == lcs[n]:
-            x_in_lcs.append(True)
-            n += 1
-        else:
-            x_in_lcs.append(False)
-
-    return x_in_lcs
