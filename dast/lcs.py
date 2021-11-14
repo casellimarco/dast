@@ -9,7 +9,7 @@ def get_lcs(xs: Iterable[Any], ys: Iterable[Any]):
     Longest common subsequence between two finite iterables via dynamic programming.
 
     >>> get_lcs("abcde", "abfgdfe")
-    (['a', 'b', 'd', 'e'], [True, True, False, True, True], [True, True, False, False, True, False, True])
+    ['a', 'b', 'd', 'e']
     """
     # sub_problems[i, j] = LCS between all_x[:i] and all_y[:j]
     sub_problems: Dict[Tuple[int, int], List] = defaultdict(list)
