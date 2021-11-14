@@ -15,7 +15,7 @@ import ast
 import sys
 from functools import partial
 
-from deepdiff import DeepDiff
+from dast.diff import Diff
 
 from dast.from_ast import strip, prettify
 
@@ -37,7 +37,7 @@ def main(then_path: str, now_path: str, verbose: bool = True):
         strip(now_ast)
         prettify(now_ast)
 
-    diff = DeepDiff(then_ast, now_ast)
+    diff = Diff(then_ast, now_ast)
     if diff and verbose:
         print(f"diff for file {now_path}")
         print(diff)
