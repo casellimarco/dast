@@ -17,9 +17,9 @@ class Diff(DeepDiff):
         Will compute the LCS between the two levels by using the DistanceMixin and a maximum cutoff threshold
         """
         t1_hashes = DeepHash(level.t1)
-        t1 = [t1_hashes[level.t1[i]] for i in range(len(level.t1))]
+        t1 = [t1_hashes[obj] for obj in level.t1]
         t2_hashes = DeepHash(level.t2)
-        t2 = [t2_hashes[level.t2[i]] for i in range(len(level.t2))]
+        t2 = [t2_hashes[obj] for obj in level.t2]
 
         lcs = get_lcs(t1, t2)
 
