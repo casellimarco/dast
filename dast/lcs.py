@@ -25,4 +25,3 @@ def get_lcs(xs: Iterable[Any], ys: Iterable[Any]):
                     key=len)
 
     return sub_problems[len(list(xs)), len(list(ys))]
-
