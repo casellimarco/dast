@@ -46,29 +46,46 @@ def main(then_path: str, now_path: str, verbose: bool = True):
     # This also includes end_lineno and end_col_offset
     ignored_props = {"type_ignores", "type_comment", "col_offset", "lineno"}
     callback = lambda _, path: any(path.endswith(prop) for prop in ignored_props)
-    diff = DeepDiff(then_ast, now_ast, exclude_obj_callback=callback)
+    diff = DeepDiff(then_ast, now_ast, ignore_order=True, exclude_obj_callback=callback)
     if diff and verbose:
-        print_diff(diff, now_path, then_ast)
+        print_diff(diff, now_path, then_ast, now_ast)
 
     return now_ast, then_ast, diff
 
 def describe_node(node):
     if isinstance(node, ast.Module):
         return "module body"
-    else:
-        return str(node.__class__)
-def describe_change(then, change_type, path):
+    if isinstance(node, ast.If):
+        return f"if statement"
+    if isinstance(node, ast.AugAssign):
+        return f"augmented assignment"
+    if isinstance(node, ast.Call):
+        return f"call to function {ast.unparse(node.func)}"
+    if isinstance(node, ast.keyword):
+        return "keyword"
+    if isinstance(node, ast.Name):
+        return "variable"
+    if isinstance(node, ast.For):
+        return "for loop"
+    if isinstance(node, ast.FunctionDef):
+        return f"function definition '{node.name}'"
+
+    return str(node.__class__)
+
+def describe_change(then, now, change_type, path):
     msg = ""
 
     is_added = True
     parent = describe_node(eval(path.replace("root", "then").rpartition(".")[0]))
     if change_type == "iterable_item_removed":
-        msg += f"Item removed from {parent}"
+        node = describe_node(eval(path.replace("root", "then")))
+        msg += f"{node} removed from {parent}"
         is_added = False
-    elif change_type == "type_changes":
+    elif change_type in ["type_changes", "values_changed"]:
         msg += f"Item changed in {parent}"
     elif change_type == "iterable_item_added":
-        msg += f"Item added to {parent}"
+        node = describe_node(eval(path.replace("root", "now")))
+        msg += f"{node} added to {parent}"
         is_added = True
     else:
         return change_type + " unknown", None
@@ -76,14 +93,13 @@ def describe_change(then, change_type, path):
     return msg, is_added
 
 
-def print_diff(diff, now_path, then):
+def print_diff(diff, now_path, then, now):
     print(f"diff --git a/{now_path} b/{now_path}")
     print(f"--- a/{now_path}")
     print(f"+++ b/{now_path}")
     for change_type, changes in diff.items():
-        print(change_type)
         for path, change in changes.items():
-            description, is_added = describe_change(then, change_type, path)
+            description, is_added = describe_change(then, now, change_type, path)
             print(f"{bcolors.OKCYAN}@@ -{0},{0} +{0},{0} @@{bcolors.ENDC} {description}")
             if isinstance(change, ast.AST):
                 colour = bcolors.OKGREEN if is_added else bcolors.WARNING
