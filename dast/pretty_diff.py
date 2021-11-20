@@ -9,8 +9,6 @@ class Colors:
     END = '\033[0m'
 
 def print_diff(diff, now_path, then, now):
-    then_lines = ast.unparse(then)
-    now_lines = ast.unparse(now)
     print(f"diff --git a/{now_path} b/{now_path}")
     print(f"--- a/{now_path}")
     print(f"+++ b/{now_path}")
@@ -45,6 +43,8 @@ def describe_node(node):
         return f"if statement"
     if isinstance(node, ast.AugAssign):
         return f"augmented assignment"
+    if isinstance(node, ast.Assign):
+        return f"assignment"
     if isinstance(node, ast.Call):
         return f"call to function {ast.unparse(node.func)}"
     if isinstance(node, ast.keyword):
