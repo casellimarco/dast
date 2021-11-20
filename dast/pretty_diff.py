@@ -19,16 +19,16 @@ def print_diff(diff, now_path, then, now):
             description, is_added = describe_change(then, now, change_type, path)
             print(f"{Colors.CYAN}@@ -{0},{0} +{0},{0} @@{Colors.END} {description}")
             if isinstance(change, ast.AST):
-                haha(change, is_added)
+                print_change_with_colour(change, is_added)
             else:
-                haha(change['old_value'], False)
-                haha(change['new_value'], True)
+                print_change_with_colour(change['old_value'], False)
+                print_change_with_colour(change['new_value'], True)
 
 
-def haha(change, is_added):
+def print_change_with_colour(change, is_added):
     colour = Colors.GREEN if is_added else Colors.RED
     symbol = "+" if is_added else "-"
-    change_text = symbol + ast.unparse(change).replace("\n", "\n" + symbol)
+    change_text = symbol + unparse(change).replace("\n", "\n" + symbol)
     print(colour + change_text + Colors.END)
 
 
