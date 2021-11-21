@@ -1,0 +1,7 @@
+diff --dast b1.py
+a = print([91m5[0m[93m->[0m[92m3[0m, 3)
+if True:
+    print('hi', [91mkey=5[0m)
+    print('hi2')[92m
+    print('wow')[0m
+b = [1, 2, 3, [92m5[0m]

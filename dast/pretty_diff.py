@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 import re
 from copy import deepcopy
 from collections import defaultdict
@@ -14,6 +15,11 @@ CYAN = '\033[96m'
 YELLOW = '\033[93m'
 END = '\033[0m'
 
+@dataclass
+class Delta:
+    old: ast.AST
+    new: ast.AST
+
 class Unparser(ast._Unparser):
     def traverse(self, node):
         if isinstance(node, list):
@@ -26,6 +32,16 @@ class Unparser(ast._Unparser):
             ast.NodeVisitor.visit(self, node)
             if colour is not None:
                 self._source.append(END)
+
+    def visit_Delta(self, node):
+        before_old = len("".join(self._source).splitlines())
+        self.traverse(node.old)
+        after_old = len("".join(self._source).splitlines())
+        if after_old == before_old:
+            self._source.append(YELLOW + "->" + END)
+        else:
+            self._source.append("\n" + YELLOW + u"\N{Downwards Arrow}")
+        self.traverse(node.new)
 
 def split_path(path):
     parent, _, child = path.rpartition(".")
@@ -49,7 +65,7 @@ def print_diff(diff, now_path, then: ast.AST, now: ast.AST):
             parent_path, prop, index = split_path(path)
             all_changes.append((index, parent_path, prop, change, description, is_added))
 
-    for index, parent_path, prop, change, description, is_added in sorted(all_changes, key=lambda x: x[0]):
+    for index, parent_path, prop, change, description, is_added in sorted(all_changes, key=lambda x: x[0] if x[0] is not None else -1):
         parent = eval(parent_path.replace("root", "both"))
         if isinstance(change, ast.AST):
             assert index is not None
@@ -61,12 +77,11 @@ def print_diff(diff, now_path, then: ast.AST, now: ast.AST):
         else: # Changed
             change["old_value"].colour = RED
             change["new_value"].colour = GREEN
+            delta = Delta(change["old_value"], change["new_value"])
             if index is not None:
-                getattr(parent, prop).insert(index, change["old_value"])
-                getattr(parent, prop).insert(index, change["new_value"])
+                getattr(parent, prop).insert(index, delta)
             else:
-                setattr(parent, prop, change["new_value"])
-                # TODO: Make old value
+                setattr(parent, prop, delta)
 
     unparser = Unparser()
     print(unparser.visit(both))

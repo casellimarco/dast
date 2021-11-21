@@ -48,7 +48,7 @@ def main(then_path: str, now_path: str, verbose: bool = True):
     ignored_props = {"type_ignores", "type_comment", "col_offset", "lineno"}
     callback = lambda _, path: any(path.endswith(prop) for prop in ignored_props)
     compare_constants = CompareConstants()
-    diff = DeepDiff(then_ast, now_ast, ignore_order=True, exclude_obj_callback=callback, custom_operators=[compare_constants])
+    diff = DeepDiff(then_ast, now_ast, exclude_obj_callback=callback, custom_operators=[compare_constants])
     if diff and verbose:
         print_diff(diff, now_path, then_ast, now_ast)
 
