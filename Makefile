@@ -1,7 +1,7 @@
 .PHONY: lint
 lint:
 	pylint dast --max-line-length=120
-	mypy . --ignore-missing-imports
+	mypy . --ignore-missing-imports --exclude=examples --show-error-codes
 
 .PHONY: test
 test:

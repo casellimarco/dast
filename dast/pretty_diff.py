@@ -1,12 +1,12 @@
-from dataclasses import dataclass
-import re
-from copy import deepcopy
-from collections import defaultdict
-from enum import Enum
-
+"""
+Logic for printing diffs output by DeepDiff
+"""
 import ast
+import re
+from dataclasses import dataclass
+from copy import deepcopy
+from typing import Optional, Tuple
 
-from deepdiff import diff
 
 GREEN = '\033[92m'
 RED = '\033[91m'
@@ -16,10 +16,18 @@ END = '\033[0m'
 
 @dataclass
 class Delta:
+    """
+    Node used to represent a change. Added to
+    an AST and represented with arrows by `Unparser`
+    """
     old: ast.AST
     new: ast.AST
 
-class Unparser(ast._Unparser):
+class Unparser(ast._Unparser):  # type: ignore[name-defined]
+    """
+    Specialisation of Unparser visitor with the added
+    ability to use colour to display diffs
+    """
     def traverse(self, node):
         if isinstance(node, list):
             for item in node:
@@ -32,22 +40,35 @@ class Unparser(ast._Unparser):
             if colour is not None:
                 self._source.append(END)
 
-    def visit_Delta(self, node):
+    def visit_Delta(self, node):  # pylint: disable=invalid-name
+        """
+        Add arrows to the source code to represent changes.
+        """
         before_old = len("".join(self._source).splitlines())
         self.traverse(node.old)
         after_old = len("".join(self._source).splitlines())
         if after_old == before_old:
             self._source.append(YELLOW + "->" + END)
         else:
-            self._source.append("\n" + YELLOW + u"\N{Downwards Arrow}" * 3)
+            self._source.append("\n" + YELLOW + "\N{Downwards Arrow}" * 3)
         self.traverse(node.new)
 
-def split_path(path):
+def split_path(path: str) -> Tuple[str, str, Optional[int]]:
+    """
+    Split an AST path into the parent and the sub-path
+    to the child. For paths to iterables also produce the index
+
+    >>> split_path("a.b.c")
+    ('a.b', 'c', None)
+    >>> split_path("a.b.c[5]")
+    ('a.b', 'c', 5)
+    """
     parent, _, child = path.rpartition(".")
-    m = re.match(r"(.*)\[(\d)]$", child)
-    if m:
-        prop = m.group(1)
-        index = int(m.group(2))
+    match = re.match(r"(.*)\[(\d)]$", child)
+    index: Optional[int]
+    if match:
+        prop = match.group(1)
+        index = int(match.group(2))
     else:
         prop = child
         index = None
@@ -55,6 +76,9 @@ def split_path(path):
     return parent, prop, index
 
 def print_diff(diff, now_path, then: ast.AST, now: ast.AST):
+    """
+    Print the diff output by DeepDiff in a human-readable way.
+    """
     print(f"diff --dast {now_path}")
     both = deepcopy(now)
     all_changes = []
@@ -64,14 +88,20 @@ def print_diff(diff, now_path, then: ast.AST, now: ast.AST):
             parent_path, prop, index = split_path(path)
             all_changes.append((index, parent_path, prop, change, description, is_added))
 
-    for index, parent_path, prop, change, description, is_added in sorted(all_changes, key=lambda x: x[0] if x[0] is not None else -1):
+    for (
+            index,
+            parent_path,
+            prop,
+            change,
+            description,
+            is_added) in sorted(all_changes, key=lambda x: x[0] if x[0] is not None else -1):
         parent = eval(parent_path.replace("root", "both"))
         if isinstance(change, ast.AST):
             assert index is not None
             if is_added: # Only need to set node colour
                 getattr(parent, prop)[index].colour = GREEN
             else:
-                change.colour = RED
+                change.colour = RED  # type: ignore[attr-defined]
                 getattr(parent, prop).insert(index, change)
         else: # Changed
             change["old_value"].colour = RED
@@ -86,23 +116,20 @@ def print_diff(diff, now_path, then: ast.AST, now: ast.AST):
     print(unparser.visit(both))
 
 
-def unparse(maybe_node):
-    if isinstance(maybe_node, ast.AST):
-        return ast.unparse(maybe_node)
-    else:
-        return str(maybe_node)
-
-def describe_node(node):
+def describe_node(node: ast.AST) -> str:
+    """
+    A generic description of a node in the AST
+    """
     if isinstance(node, ast.Module):
         return "module body"
     if isinstance(node, ast.ClassDef):
         return "class"
     if isinstance(node, ast.If):
-        return f"if statement"
+        return "if statement"
     if isinstance(node, ast.AugAssign):
-        return f"augmented assignment"
+        return "augmented assignment"
     if isinstance(node, ast.Assign):
-        return f"assignment"
+        return "assignment"
     if isinstance(node, ast.Call):
         return f"call to function {ast.unparse(node.func)}"
     if isinstance(node, ast.keyword):
@@ -116,7 +143,10 @@ def describe_node(node):
 
     return str(node.__class__)
 
-def describe_change(then, now, change_type, path):
+def describe_change(then, now, change_type, path):  # pylint: disable=unused-argument
+    """
+    Describe a change based on the change type and the before/after
+    """
     msg = ""
 
     is_added = True
