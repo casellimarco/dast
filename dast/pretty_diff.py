@@ -41,29 +41,32 @@ def split_path(path):
 
 def print_diff(diff, now_path, then: ast.AST, now: ast.AST):
     print(f"diff --dast {now_path}")
-    highlights = defaultdict(list)
     both = deepcopy(now)
+    all_changes = []
     for change_type, changes in diff.items():
         for path, change in changes.items():
-            parent_path, prop, index = split_path(path)
-            parent = eval(parent_path.replace("root", "both"))
             description, is_added = describe_change(then, now, change_type, path)
-            if isinstance(change, ast.AST):
-                assert index is not None
-                if is_added: # Only need to set node colour
-                    getattr(parent, prop)[index].colour = GREEN
-                else:
-                    change.colour = RED
-                    getattr(parent, prop).insert(index, change)
-            else: # Changed
-                change["old_value"].colour = RED
-                change["new_value"].colour = GREEN
-                if index is not None:
-                    getattr(parent, prop).insert(index, change["old_value"])
-                    getattr(parent, prop).insert(index, change["new_value"])
-                else:
-                    setattr(parent, prop, change["new_value"])
-                    # TODO: Make old value
+            parent_path, prop, index = split_path(path)
+            all_changes.append((index, parent_path, prop, change, description, is_added))
+
+    for index, parent_path, prop, change, description, is_added in sorted(all_changes, key=lambda x: x[0]):
+        parent = eval(parent_path.replace("root", "both"))
+        if isinstance(change, ast.AST):
+            assert index is not None
+            if is_added: # Only need to set node colour
+                getattr(parent, prop)[index].colour = GREEN
+            else:
+                change.colour = RED
+                getattr(parent, prop).insert(index, change)
+        else: # Changed
+            change["old_value"].colour = RED
+            change["new_value"].colour = GREEN
+            if index is not None:
+                getattr(parent, prop).insert(index, change["old_value"])
+                getattr(parent, prop).insert(index, change["new_value"])
+            else:
+                setattr(parent, prop, change["new_value"])
+                # TODO: Make old value
 
     unparser = Unparser()
     print(unparser.visit(both))
