@@ -1,33 +1,72 @@
+import re
+from copy import deepcopy
+from collections import defaultdict
 from enum import Enum
+from rich import print as rprint
 
 import ast
 
-class Colors:
-    GREEN = '\033[92m'
-    RED = '\033[91m'
-    CYAN = '\033[96m'
-    END = '\033[0m'
+from deepdiff import diff
 
-def print_diff(diff, now_path, then, now):
-    print(f"diff --git a/{now_path} b/{now_path}")
-    print(f"--- a/{now_path}")
-    print(f"+++ b/{now_path}")
+GREEN = '\033[92m'
+RED = '\033[91m'
+CYAN = '\033[96m'
+YELLOW = '\033[93m'
+END = '\033[0m'
+
+class Unparser(ast._Unparser):
+    def traverse(self, node):
+        if isinstance(node, list):
+            for item in node:
+                self.traverse(item)
+        else:
+            colour = getattr(node, "colour", None)
+            if colour is not None:
+                self._source.append(colour)
+            ast.NodeVisitor.visit(self, node)
+            if colour is not None:
+                self._source.append(END)
+
+def split_path(path):
+    parent, _, child = path.rpartition(".")
+    m = re.match(r"(.*)\[(\d)]$", child)
+    if m:
+        prop = m.group(1)
+        index = int(m.group(2))
+    else:
+        prop = child
+        index = None
+
+    return parent, prop, index
+
+def print_diff(diff, now_path, then: ast.AST, now: ast.AST):
+    print(f"diff --dast {now_path}")
+    highlights = defaultdict(list)
+    both = deepcopy(now)
     for change_type, changes in diff.items():
         for path, change in changes.items():
+            parent_path, prop, index = split_path(path)
+            parent = eval(parent_path.replace("root", "both"))
             description, is_added = describe_change(then, now, change_type, path)
-            print(f"{Colors.CYAN}@@ -{0},{0} +{0},{0} @@{Colors.END} {description}")
             if isinstance(change, ast.AST):
-                print_change_with_colour(change, is_added)
-            else:
-                print_change_with_colour(change['old_value'], False)
-                print_change_with_colour(change['new_value'], True)
+                assert index is not None
+                if is_added: # Only need to set node colour
+                    getattr(parent, prop)[index].colour = GREEN
+                else:
+                    change.colour = RED
+                    getattr(parent, prop).insert(index, change)
+            else: # Changed
+                change["old_value"].colour = RED
+                change["new_value"].colour = GREEN
+                if index is not None:
+                    getattr(parent, prop).insert(index, change["old_value"])
+                    getattr(parent, prop).insert(index, change["new_value"])
+                else:
+                    setattr(parent, prop, change["new_value"])
+                    # TODO: Make old value
 
-
-def print_change_with_colour(change, is_added):
-    colour = Colors.GREEN if is_added else Colors.RED
-    symbol = "+" if is_added else "-"
-    change_text = symbol + unparse(change).replace("\n", "\n" + symbol)
-    print(colour + change_text + Colors.END)
+    unparser = Unparser()
+    print(unparser.visit(both))
 
 
 def unparse(maybe_node):
@@ -39,6 +78,8 @@ def unparse(maybe_node):
 def describe_node(node):
     if isinstance(node, ast.Module):
         return "module body"
+    if isinstance(node, ast.ClassDef):
+        return "class"
     if isinstance(node, ast.If):
         return f"if statement"
     if isinstance(node, ast.AugAssign):

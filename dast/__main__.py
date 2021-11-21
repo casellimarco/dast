@@ -19,6 +19,15 @@ from deepdiff import DeepDiff
 
 from dast.pretty_diff import print_diff
 
+class CompareConstants:
+    def match(self, level):
+        return isinstance(level.t1, ast.Constant) and isinstance(level.t2, ast.Constant)
+
+    def give_up_diffing(self, level, diff_instance):
+        if level.t1.value != level.t2.value:
+            diff_instance._report_result('values_changed', level)
+
+        return True
 
 
 _open_utf = partial(open, encoding="utf-8")
@@ -38,7 +47,8 @@ def main(then_path: str, now_path: str, verbose: bool = True):
     # This also includes end_lineno and end_col_offset
     ignored_props = {"type_ignores", "type_comment", "col_offset", "lineno"}
     callback = lambda _, path: any(path.endswith(prop) for prop in ignored_props)
-    diff = DeepDiff(then_ast, now_ast, ignore_order=True, exclude_obj_callback=callback)
+    compare_constants = CompareConstants()
+    diff = DeepDiff(then_ast, now_ast, ignore_order=True, exclude_obj_callback=callback, custom_operators=[compare_constants])
     if diff and verbose:
         print_diff(diff, now_path, then_ast, now_ast)
 
