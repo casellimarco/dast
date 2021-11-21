@@ -37,7 +37,7 @@ def main(then_path: str, now_path: str, verbose: bool = True):
     Compare two python paths and print the difference
     """
     if not now_path.endswith(".py"):
-        return None, None
+        return None, None, None
     with _open_utf(then_path) as f_then:
         then_ast = ast.parse(f_then.read())
 

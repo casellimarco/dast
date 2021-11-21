@@ -3,7 +3,6 @@ import re
 from copy import deepcopy
 from collections import defaultdict
 from enum import Enum
-from rich import print as rprint
 
 import ast
 
@@ -40,7 +39,7 @@ class Unparser(ast._Unparser):
         if after_old == before_old:
             self._source.append(YELLOW + "->" + END)
         else:
-            self._source.append("\n" + YELLOW + u"\N{Downwards Arrow}")
+            self._source.append("\n" + YELLOW + u"\N{Downwards Arrow}" * 3)
         self.traverse(node.new)
 
 def split_path(path):
@@ -79,7 +78,7 @@ def print_diff(diff, now_path, then: ast.AST, now: ast.AST):
             change["new_value"].colour = GREEN
             delta = Delta(change["old_value"], change["new_value"])
             if index is not None:
-                getattr(parent, prop).insert(index, delta)
+                getattr(parent, prop)[index] = delta
             else:
                 setattr(parent, prop, delta)
 
