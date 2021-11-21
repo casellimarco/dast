@@ -6,6 +6,7 @@ lint:
 .PHONY: test
 test:
 	python -m doctest -v dast/lcs.py
+	python -m doctest -v dast/pretty_diff.py
 
 .PHONY: tag
 tag:
