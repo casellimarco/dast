@@ -15,7 +15,7 @@ import ast
 import sys
 from functools import partial
 
-from deepdiff import DeepDiff
+from dast.diff import Diff
 
 from dast.from_ast import prettify
 
@@ -38,7 +38,7 @@ def main(then_path: str, now_path: str, verbose: bool = True):
     # This also includes end_lineno and end_col_offset
     ignored_props = {"type_ignores", "type_comment", "col_offset", "lineno"}
     callback = lambda _, path: any(path.endswith(prop) for prop in ignored_props)
-    diff = DeepDiff(then_ast, now_ast, exclude_obj_callback=callback)
+    diff = Diff(then_ast, now_ast, exclude_obj_callback=callback)
     if diff and verbose:
         print(f"diff for file {now_path}")
         print(diff)
