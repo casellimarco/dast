@@ -19,16 +19,6 @@ from deepdiff import DeepDiff
 
 from dast.pretty_diff import print_diff
 
-def match_pairs(x, y, _):
-    """
-    Compare two objects and return True if they are identical. Can be extended
-    to matching non-identical objects by setting a distance threshold
-    """
-    minidiff = DeepDiff(x, y, exclude_obj_callback=callback, iterable_compare_func=match_pairs, get_deep_distance=True)
-    distance = minidiff.tree["deep_distance"]
-
-    return distance == []
-
 # This also includes end_lineno and end_col_offset
 ignored_props = {"col_offset", "lineno"}
 callback = lambda _, path: any(path.endswith(prop) for prop in ignored_props)
@@ -47,7 +37,7 @@ def main(then_path: str, now_path: str, verbose: bool = True):
     with _open_utf(now_path) as f_now:
         now_ast = ast.parse(f_now.read())
 
-    _diff = DeepDiff(then_ast, now_ast, exclude_obj_callback=callback, iterable_compare_func=match_pairs)
+    _diff = DeepDiff(then_ast, now_ast, exclude_obj_callback=callback)
     if _diff and verbose:
         print_diff(_diff, now_path, then_ast, now_ast)
 
