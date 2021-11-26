@@ -17,7 +17,11 @@ from functools import partial
 
 from deepdiff import DeepDiff
 
-from dast.from_ast import prettify
+from dast.pretty_diff import print_diff
+
+# This also includes end_lineno and end_col_offset
+ignored_props = {"col_offset", "lineno"}
+callback = lambda _, path: any(path.endswith(prop) for prop in ignored_props)
 
 _open_utf = partial(open, encoding="utf-8")
 
@@ -26,24 +30,22 @@ def main(then_path: str, now_path: str, verbose: bool = True):
     Compare two python paths and print the difference
     """
     if not now_path.endswith(".py"):
-        return None, None
+        return None, None, None
     with _open_utf(then_path) as f_then:
         then_ast = ast.parse(f_then.read())
-        prettify(then_ast)
 
     with _open_utf(now_path) as f_now:
         now_ast = ast.parse(f_now.read())
-        prettify(now_ast)
 
-    # This also includes end_lineno and end_col_offset
-    ignored_props = {"type_ignores", "type_comment", "col_offset", "lineno"}
-    callback = lambda _, path: any(path.endswith(prop) for prop in ignored_props)
-    diff = DeepDiff(then_ast, now_ast, exclude_obj_callback=callback)
-    if diff and verbose:
-        print(f"diff for file {now_path}")
-        print(diff)
+    _diff = DeepDiff(then_ast, now_ast, exclude_obj_callback=callback)
+    if _diff and verbose:
+        print_diff(_diff, now_path, then_ast, now_ast)
 
-    return now_ast, then_ast
+    return now_ast, then_ast, _diff
+
+
+
+
 
 if __name__ == "__main__":
-    now, then = main(sys.argv[1], sys.argv[2])
+    now, then, diff = main(sys.argv[1], sys.argv[2])

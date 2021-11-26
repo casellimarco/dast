@@ -1,0 +1,5 @@
+diff --dast examples/b1.py
+a = print([91m5[0m[93m->[0m[92m3[0m)[91m
+print('6')[0m
+[93m↓↓↓[92m
+d = 5[0m
