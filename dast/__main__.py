@@ -20,6 +20,10 @@ from deepdiff import DeepDiff
 from dast.pretty_diff import print_diff
 
 def match_pairs(x, y, _):
+    """
+    Compare two objects and return True if they are identical. Can be extended
+    to matching non-identical objects by setting a distance threshold
+    """
     minidiff = DeepDiff(x, y, exclude_obj_callback=callback, iterable_compare_func=match_pairs, get_deep_distance=True)
     distance = minidiff.tree["deep_distance"]
 

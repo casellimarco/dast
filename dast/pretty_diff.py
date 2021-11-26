@@ -60,7 +60,10 @@ class Unparser(ast._Unparser):  # type: ignore[name-defined]
             self._source.append("\n" + YELLOW + "\N{Downwards Arrow}" * 3)
         self.traverse(node.new)
 
-    def visit_Wrapper(self, node):
+    def visit_Wrapper(self, node):  # pylint: disable=invalid-name
+        """
+        Do nothing - just keep going to the level below
+        """
         self.traverse(node.value)
 
 def split_path(path: str) -> Tuple[str, str, Optional[int]]:
@@ -121,7 +124,7 @@ def print_diff(diff, now_path, then: ast.AST, now: ast.AST):
             if prop in ["id", "name"]:
                 setattr(parent, prop, RED + change["old_value"] + YELLOW + "->" + GREEN + change["new_value"] + END)
                 continue
-            elif not isinstance(change["old_value"], ast.AST):
+            if not isinstance(change["old_value"], ast.AST):
                 change["old_value"] = Wrapper(change["old_value"])
                 change["new_value"] = Wrapper(change["new_value"]) # Both must be simple types (string, int, etc.)
             change["old_value"].colour = RED
