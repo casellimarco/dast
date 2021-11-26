@@ -167,14 +167,14 @@ def describe_node(node: ast.AST) -> str:
 
     return str(node.__class__)
 
-def describe_change(then, now, change_type, path):  # pylint: disable=unused-argument
+def describe_change(then, now, change_type, path) -> Tuple[str, Optional[bool]]:  # pylint: disable=unused-argument
     """
     Describe a change based on the change type and the before/after
     """
     msg = ""
 
-    is_added = True
     parent = describe_node(eval(path.replace("root", "then").rpartition(".")[0]))
+    is_added: Optional[bool]
     if change_type == "iterable_item_removed":
         node = describe_node(eval(path.replace("root", "then")))
         msg += f"{node} removed from {parent}"
@@ -182,6 +182,7 @@ def describe_change(then, now, change_type, path):  # pylint: disable=unused-arg
     elif change_type in ["type_changes", "values_changed"]:
         node = describe_node(eval(path.replace("root", "then")))
         msg += f"{node} changed in {parent}"
+        is_added = None
     elif change_type == "iterable_item_added":
         node = describe_node(eval(path.replace("root", "now")))
         msg += f"{node} added to {parent}"
