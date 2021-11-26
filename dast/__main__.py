@@ -19,29 +19,17 @@ from deepdiff import DeepDiff
 
 from dast.pretty_diff import print_diff
 
-class CompareConstants:
-    """
-    Class for directly comparing `Constant` nodes
-    to prevent DeepDiff from unwrapping them. This way
-    the `pretty_diff` module can assume that all changes have
-    an `ast.AST` type.
-    """
-    def match(self, level):  # pylint: disable=no-self-use
-        """
-        Function called by DeepDiff during comparisons. Matches
-        when both are `ast.Constant` nodes.
-        """
-        return isinstance(level.t1, ast.Constant) and isinstance(level.t2, ast.Constant)
+def match_pairs(x, y, _):
+    minidiff = DeepDiff(x, y, exclude_obj_callback=callback, iterable_compare_func=match_pairs)
+    distance = minidiff.tree["deep_distance"]
+    # if distance == []:
+    #     print(repr(ast.unparse(x)), repr(ast.unparse(y)), "are identical")
 
-    def give_up_diffing(self, level, diff_instance):  # pylint: disable=no-self-use
-        """
-        Report any changes then prevent DeepDiff from digging any further
-        """
-        if level.t1.value != level.t2.value:
-            diff_instance._report_result('values_changed', level)
+    return distance == []
 
-        return True
-
+# This also includes end_lineno and end_col_offset
+ignored_props = {"col_offset", "lineno"}
+callback = lambda _, path: any(path.endswith(prop) for prop in ignored_props)
 
 _open_utf = partial(open, encoding="utf-8")
 
@@ -57,11 +45,7 @@ def main(then_path: str, now_path: str, verbose: bool = True):
     with _open_utf(now_path) as f_now:
         now_ast = ast.parse(f_now.read())
 
-    # This also includes end_lineno and end_col_offset
-    ignored_props = {"col_offset", "lineno"}
-    callback = lambda _, path: any(path.endswith(prop) for prop in ignored_props)
-    compare_constants = CompareConstants()
-    _diff = DeepDiff(then_ast, now_ast, exclude_obj_callback=callback, custom_operators=[compare_constants])
+    _diff = DeepDiff(then_ast, now_ast, exclude_obj_callback=callback, iterable_compare_func=match_pairs)
     if _diff and verbose:
         print_diff(_diff, now_path, then_ast, now_ast)
 

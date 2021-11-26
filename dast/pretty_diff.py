@@ -5,7 +5,7 @@ import ast
 import re
 from dataclasses import dataclass
 from copy import deepcopy
-from typing import Optional, Tuple
+from typing import Any, Optional, Tuple
 
 
 GREEN = '\033[92m'
@@ -22,6 +22,13 @@ class Delta:
     """
     old: ast.AST
     new: ast.AST
+
+@dataclass
+class Wrapper:
+    """
+    Node used to assign colour to a simple string or int value
+    """
+    value: Any
 
 class Unparser(ast._Unparser):  # type: ignore[name-defined]
     """
@@ -53,6 +60,9 @@ class Unparser(ast._Unparser):  # type: ignore[name-defined]
             self._source.append("\n" + YELLOW + "\N{Downwards Arrow}" * 3)
         self.traverse(node.new)
 
+    def visit_Wrapper(self, node):
+        self.traverse(node.value)
+
 def split_path(path: str) -> Tuple[str, str, Optional[int]]:
     """
     Split an AST path into the parent and the sub-path
@@ -62,9 +72,11 @@ def split_path(path: str) -> Tuple[str, str, Optional[int]]:
     ('a.b', 'c', None)
     >>> split_path("a.b.c[5]")
     ('a.b', 'c', 5)
+    >>> split_path("root.body[10]")
+    ('root', 'body', 10)
     """
     parent, _, child = path.rpartition(".")
-    match = re.match(r"(.*)\[(\d)]$", child)
+    match = re.match(r"(.*)\[(\d+)]$", child)
     index: Optional[int]
     if match:
         prop = match.group(1)
@@ -86,7 +98,7 @@ def print_diff(diff, now_path, then: ast.AST, now: ast.AST):
         for path, change in changes.items():
             description, is_added = describe_change(then, now, change_type, path)
             parent_path, prop, index = split_path(path)
-            all_changes.append((index, parent_path, prop, change, description, is_added))
+            all_changes.append((index, parent_path, prop, change, description, is_added, path))
 
     for (
             index,
@@ -94,7 +106,9 @@ def print_diff(diff, now_path, then: ast.AST, now: ast.AST):
             prop,
             change,
             description,
-            is_added) in sorted(all_changes, key=lambda x: x[0] if x[0] is not None else -1):
+            is_added,
+            path,
+            ) in sorted(all_changes, key=lambda x: x[0] if x[0] is not None else -1):
         parent = eval(parent_path.replace("root", "both"))
         if isinstance(change, ast.AST):
             assert index is not None
@@ -104,8 +118,15 @@ def print_diff(diff, now_path, then: ast.AST, now: ast.AST):
                 change.colour = RED  # type: ignore[attr-defined]
                 getattr(parent, prop).insert(index, change)
         else: # Changed
+            if prop in ["id", "name"]:
+                setattr(parent, prop, RED + change["old_value"] + YELLOW + "->" + GREEN + change["new_value"] + END)
+                continue
+            elif not isinstance(change["old_value"], ast.AST):
+                change["old_value"] = Wrapper(change["old_value"])
+                change["new_value"] = Wrapper(change["new_value"]) # Both must be simple types (string, int, etc.)
             change["old_value"].colour = RED
             change["new_value"].colour = GREEN
+            print(prop)
             delta = Delta(change["old_value"], change["new_value"])
             if index is not None:
                 getattr(parent, prop)[index] = delta
