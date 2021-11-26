@@ -20,10 +20,8 @@ from deepdiff import DeepDiff
 from dast.pretty_diff import print_diff
 
 def match_pairs(x, y, _):
-    minidiff = DeepDiff(x, y, exclude_obj_callback=callback, iterable_compare_func=match_pairs)
+    minidiff = DeepDiff(x, y, exclude_obj_callback=callback, iterable_compare_func=match_pairs, get_deep_distance=True)
     distance = minidiff.tree["deep_distance"]
-    # if distance == []:
-    #     print(repr(ast.unparse(x)), repr(ast.unparse(y)), "are identical")
 
     return distance == []
 
