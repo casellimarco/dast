@@ -50,65 +50,6 @@ class Hash(DeepHash):
 class Diff(DeepDiff):
     mapping = {}
 
-    def _get_matching_pairs(self, level):
-        """
-        Given a level get matching pairs. This returns list of two tuples in the form:
-        [
-          (t1 index, t2 index), (t1 item, t2 item)
-        ]
-
-        This will compare using the passed in `iterable_compare_func` if available.
-        Default it to compare in order
-        """
-
-        if(self.iterable_compare_func is None):
-            # Match in order if there is no compare function provided
-            return self._compare_in_order(level)
-        try:
-            matches = []
-            y_matched = set()
-            y_index_matched = set()
-            for i, x in enumerate(level.t1):
-                x_found = False
-                for j, y in enumerate(level.t2):
-
-                    if(j in y_index_matched):
-                        # This ensures a one-to-one relationship of matches from t1 to t2.
-                        # If y this index in t2 has already been matched to another x
-                        # it cannot have another match, so just continue.
-                        continue
-
-                    if(self.iterable_compare_func(x, y, level)):
-# --- begin diff wrt to deepdiff ---
-                        deep_hash = Hash(y,
-# --- end diff wrt to deepdiff ---
-                                             hashes=self.hashes,
-                                             apply_hash=True,
-                                             **self.deephash_parameters,
-                                             )
-                        y_index_matched.add(j)
-                        y_matched.add(deep_hash[y])
-                        matches.append(((i, j), (x, y)))
-                        x_found = True
-                        break
-
-                if(not x_found):
-                    matches.append(((i, -1), (x, ListItemRemovedOrAdded)))
-            for j, y in enumerate(level.t2):
-
-# --- begin diff wrt to deepdiff ---
-                deep_hash = Hash(y,
-# --- end diff wrt to deepdiff ---
-                                     hashes=self.hashes,
-                                     apply_hash=True,
-                                     **self.deephash_parameters,
-                                     )
-                if(deep_hash[y] not in y_matched):
-                    matches.append(((-1, j), (ListItemRemovedOrAdded, y)))
-            return matches
-        except CannotCompare:
-            return self._compare_in_order(level)
-
     def _create_hashtable(self, level, t):
         """Create hashtable of {item_hash: (indexes, item)}"""
         obj = getattr(level, t)
