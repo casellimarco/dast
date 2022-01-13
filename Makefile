@@ -6,6 +6,7 @@ lint:
 .PHONY: test
 test:
 	python -m doctest -v dast/lcs.py
+	pytest tests
 
 .PHONY: tag
 tag:
